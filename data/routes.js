@@ -24,7 +24,7 @@ module.exports = [
 
 🔥 ФІНАЛ:
 Говерла — це досвід, який залишає відчуття перемоги. Не просто прогулянка, а справжній гірський челендж.`,
-        price: 3000,
+        price: 30,
         time: "6–7 годин",
         difficulty: "Середній",
         image: "https://timetotravel.in.ua/wp-content/uploads/2024/07/Goverla-600x400.jpg"
@@ -57,7 +57,7 @@ module.exports = [
 
 🔥 ФІНАЛ:
 Це маршрут, після якого ти починаєш розуміти Карпати — не через складність, а через емоції.`,
-        price: 2000,
+        price: 20,
         time: "3–5 годин",
         difficulty: "Легкий",
         image: "https://uni-travel.com.ua/assets/galleries/1458/karpaty.jpg"

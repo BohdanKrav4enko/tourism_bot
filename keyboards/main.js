@@ -5,4 +5,11 @@ const mainKeyboard = Markup.keyboard([
     ["ℹ️ Про бот", "🏠 Головна"]
 ]).resize();
 
-module.exports = mainKeyboard;
+const questionsKeyboardBack = Markup.keyboard([
+    ["↩️ Назад"],
+]).resize();
+
+module.exports = {
+    mainKeyboard,
+    questionsKeyboardBack
+};
