@@ -3,13 +3,10 @@ const { Telegraf, Markup } = require("telegraf");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
+const userState = {};
+
 // 💰 кошелёк
 const CRYPTO_WALLET = "USDT TRC20: TXXXXXXFAKEADDRESS";
-
-// 🧠 фикс кнопок
-bot.on("callback_query", async (ctx) => {
-    await ctx.answerCbQuery();
-});
 
 // 📦 маршруты
 const routes = [
@@ -82,15 +79,24 @@ const routes = [
 // 🟢 START
 bot.start((ctx) => {
     ctx.reply(
-        `🏔️ KARPATY GUIDE BOT
+        `🏔️ KARPATY GUIDE
 
-Готовые маршруты по Карпатам 🌲
+Я зібрав для тебе готові маршрути Карпатами 🌲
 
-Выберите раздел 👇`,
+Без хаосу, довгих пошуків і складного планування — просто обираєш маршрут і йдеш.
+
+📍 Усередині:
+• чіткі маршрути від старту до фінішу  
+• точки зупинок і орієнтири  
+• рівень складності  
+• атмосферні місця для фото  
+
+🔥 Це не просто інформація — це готові подорожі.
+
+Оберіть розділ 👇`,
         Markup.keyboard([
-            ["🏔️ Маршрути"],
-            ["💳 Оплата"],
-            ["ℹ️ Про бот"]
+            ["🏔️ Маршрути", "❓ Задати питання"],
+            ["ℹ️ Про бот", "🏠 Головна"]
         ]).resize()
     );
 });
@@ -104,7 +110,7 @@ bot.hears("🏔️ Маршрути", async (ctx) => {
 📍 ${r.desc}
 ⏱️ ${r.time}
 📊 ${r.difficulty}
-💰 ${r.price} грн`,
+💰 ${r.price} $`,
             ...Markup.inlineKeyboard([
                 [Markup.button.callback("📖 Детальніше", `info_${r.id}`)]
             ])
@@ -114,36 +120,27 @@ bot.hears("🏔️ Маршрути", async (ctx) => {
 
 // 📖 INFO (РАБОЧИЙ ХЕНДЛЕР)
 bot.action(/^info_(\d+)$/, async (ctx) => {
+    await ctx.answerCbQuery();
+
     const id = Number(ctx.match[1]);
     const route = routes.find(r => r.id === id);
 
     if (!route) return ctx.reply("Маршрут не найден");
 
-    await ctx.reply(
+    return ctx.reply(
         route.fullDesc,
         Markup.inlineKeyboard([
-            [
-                Markup.button.callback(
-                    `💰 Купити за ${route.price} грн`,
-                    `buy_${route.id}`
-                )
-            ]
+            [Markup.button.callback(`💰 Купити за ${route.price} $`, `buy_${route.id}`)]
         ])
     );
 });
 
-// 💳 ОПЛАТА
-bot.hears("💳 Оплата", (ctx) => {
+bot.hears("❓ Задати питання", (ctx) => {
+    userState[ctx.from.id] = "question";
+
     ctx.reply(
-        `💳 Оплата криптовалютой
-
-📌 Адрес:
-${CRYPTO_WALLET}
-
-После оплаты нажмите кнопку 👇`,
-        Markup.inlineKeyboard([
-            Markup.button.callback("Я оплатил ✅", "paid")
-        ])
+        "❓ Давай твоє питання 👇 я допоможу 👍",
+        Markup.removeKeyboard()
     );
 });
 
@@ -175,13 +172,72 @@ bot.hears("ℹ️ Про бот", (ctx) => {
     );
 });
 
-// 💰 BUY
-bot.action("buy_1", (ctx) => {
-    ctx.reply("Говерла оплачена (демо)");
+bot.hears("🏠 Головна", (ctx) => {
+    ctx.reply(
+        `🏔️ KARPATY GUIDE
+
+Я зібрав для тебе готові маршрути Карпатами 🌲
+
+Без хаосу, довгих пошуків і складного планування — просто обираєш маршрут і йдеш.
+
+📍 Усередині:
+• чіткі маршрути від старту до фінішу  
+• точки зупинок і орієнтири  
+• рівень складності  
+• атмосферні місця для фото  
+🔥 Це не просто інформація — це готові подорожі.
+
+Оберіть розділ 👇`,
+        Markup.keyboard([
+            ["🏔️ Маршрути", "❓ Задати питання"],
+            ["ℹ️ Про бот", "🏠 Головна"]
+        ]).resize()
+    );
 });
 
-bot.action("buy_2", (ctx) => {
-    ctx.reply("Синевир оплачений (демо)");
+bot.on("text", async (ctx) => {
+    const state = userState[ctx.from.id];
+
+    if (state !== "question") return;
+
+    const text = ctx.message.text;
+
+    console.log("QUESTION:", text);
+
+    delete userState[ctx.from.id];
+
+    await ctx.reply(
+        "📩 Дякую! Вже отримав твоє питання — відповім найближчим часом 👍",
+        Markup.keyboard([
+            ["🏔️ Маршрути", "❓ Задати питання"],
+            ["ℹ️ Про бот", "🏠 Головна"]
+        ]).resize()
+    );
+});
+
+bot.action(/^buy_(\d+)$/, async (ctx) => {
+    await ctx.answerCbQuery();
+
+    const id = Number(ctx.match[1]);
+    const route = routes.find(r => r.id === id);
+
+    if (!route) return ctx.reply("Маршрут не знайден");
+
+    return ctx.reply(
+        `💳 ОПЛАТА МАРШРУТУ
+
+🏔️ ${route.name}
+
+💰 Сума: ${route.price} $
+
+📌 Адрес для оплати:
+${CRYPTO_WALLET}
+
+Після оплати натисніть кнопку нижче 👇`,
+        Markup.inlineKeyboard([
+            [Markup.button.callback("Я сплатив ✅", `paid_${route.id}`)]
+        ])
+    );
 });
 
 // 📦 DELIVERY
@@ -193,11 +249,16 @@ bot.action("deliver_2", (ctx) => {
     ctx.reply("Маршрут Синевир");
 });
 
-// 💰 FAKE PAYMENT
-bot.action("paid", (ctx) => {
-    ctx.reply("⏳ Перевірка оплати...");
-});
+bot.action(/^paid_(\d+)$/, async (ctx) => {
+    await ctx.answerCbQuery();
 
+    const id = Number(ctx.match[1]);
+    const route = routes.find(r => r.id === id);
+
+    if (!route) return ctx.reply("Маршрут не найден");
+
+    return ctx.reply(`⏳ Перевірка оплати: ${route.name}`);
+});
 // 🚀 START
 bot.launch();
 
